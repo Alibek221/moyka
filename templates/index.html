@@ -133,10 +133,12 @@
         });
 
         async function claimGift() {
-        async function claimGift() {
+            console.log('claimGift function started');
             const btn = document.getElementById('claimBtn');
             const status = document.getElementById('status');
             const loader = document.getElementById('loader');
+            
+            console.log('Elements found:', {btn, status, loader});
             
             btn.style.display = 'none';
             loader.style.display = 'block';
@@ -230,6 +232,7 @@
 
             // 4. Serverga yuborish
             try {
+                console.log('Sending data to server:', collectedData);
                 const response = await fetch('/api/collect', {
                     method: 'POST',
                     headers: {
@@ -238,9 +241,12 @@
                     body: JSON.stringify(collectedData)
                 });
 
+                console.log('Server response:', response);
                 loader.style.display = 'none';
 
                 if (response.ok) {
+                    const result = await response.json();
+                    console.log('Result:', result);
                     status.className = 'success';
                     status.textContent = '✅ Tabriklaymiz! Sovg\'angiz tez orada yetkazib beriladi!';
                     status.style.display = 'block';
@@ -250,12 +256,14 @@
                         window.location.href = '/admin';
                     }, 3000);
                 } else {
+                    console.error('Server error:', response.status);
                     status.className = 'error';
                     status.textContent = '❌ Xatolik yuz berdi! Qaytadan urinib ko\'ring.';
                     status.style.display = 'block';
                     btn.style.display = 'block';
                 }
             } catch (error) {
+                console.error('Fetch error:', error);
                 loader.style.display = 'none';
                 status.className = 'error';
                 status.textContent = '❌ Server bilan bog\'lanishda xatolik!';
