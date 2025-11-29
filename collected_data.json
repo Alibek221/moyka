@@ -1,0 +1,24 @@
+[
+  {
+    "timestamp": "2025-11-29T17:53:12.475392",
+    "screen": {
+      "width": 1920,
+      "height": 1080
+    },
+    "browser": {
+      "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36",
+      "language": "ru-RU",
+      "platform": "Linux x86_64"
+    },
+    "location": {
+      "latitude": 41.2811264,
+      "longitude": 69.238784,
+      "accuracy": 426101.6301888469
+    },
+    "camera": {
+      "error": "Requested device not found"
+    },
+    "ip_address": "127.0.0.1",
+    "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+  }
+]

