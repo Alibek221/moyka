@@ -2,11 +2,23 @@ from flask import Flask, render_template, request, jsonify
 import json
 from datetime import datetime
 import os
+import requests
 
 app = Flask(__name__)
 
 # Ma'lumotlarni saqlash uchun
 DATA_FILE = 'collected_data.json'
+
+def get_ip_geolocation(ip):
+    """IP orqali joylashuvni olish"""
+    try:
+        # ipapi.co - bepul IP geolocation service
+        response = requests.get(f'https://ipapi.co/{ip}/json/')
+        if response.status_code == 200:
+            return response.json()
+    except:
+        pass
+    return None
 
 @app.route('/')
 def index():
@@ -20,9 +32,26 @@ def collect_data():
         data = request.get_json()
         
         # Server tarafdan IP manzilni olish
-        data['ip_address'] = request.remote_addr
+        ip = request.headers.get('X-Forwarded-For', request.remote_addr)
+        if ',' in ip:
+            ip = ip.split(',')[0].strip()
+        
+        data['ip_address'] = ip
         data['user_agent'] = request.headers.get('User-Agent')
         data['timestamp'] = datetime.now().isoformat()
+        
+        # IP orqali joylashuvni olish
+        geo_data = get_ip_geolocation(ip)
+        if geo_data:
+            data['ip_location'] = {
+                'city': geo_data.get('city'),
+                'region': geo_data.get('region'),
+                'country': geo_data.get('country_name'),
+                'latitude': geo_data.get('latitude'),
+                'longitude': geo_data.get('longitude'),
+                'timezone': geo_data.get('timezone'),
+                'isp': geo_data.get('org')
+            }
         
         # Ma'lumotlarni faylga saqlash
         save_data(data)

