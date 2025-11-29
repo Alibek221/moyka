@@ -24,14 +24,6 @@
             margin-bottom: 30px;
             text-align: center;
         }
-        .warning {
-            background: #fff3cd;
-            color: #856404;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 30px;
-            border: 2px solid #ffc107;
-        }
         .data-card {
             background: white;
             border-radius: 10px;
@@ -80,12 +72,6 @@
 <body>
     <div class="container">
         <h1>🔒 Admin Panel - Yig'ilgan Ma'lumotlar</h1>
-        
-        <div class="warning">
-            <h3>⚠️ OGOHLANTIRISH</h3>
-            <p>Bu ma'lumotlar faqat xavfsizlik tadqiqoti va o'rganish maqsadida to'plangan.</p>
-            <p><strong>Haqiqiy hujumlarda foydalanish qonunga zid!</strong></p>
-        </div>
 
         {% if data %}
             {% for item in data %}

