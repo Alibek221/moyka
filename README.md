@@ -142,13 +142,6 @@ Bu dastur faqat ta'lim maqsadida taqdim etilgan. Yaratuvchi qonunga zid ishlatis
 
 **Eslatma:** Boshqa odamlarga zarar yetkazish maqsadida foydalanish jinoiy javobgarlikka olib keladi!
 
-## 📞 Yordam
-
-Savollar yoki muammolar bo'lsa:
-- GitHub Issues ochish
-- Ethical hacking forumlarga murojaat qilish
-- Xavfsizlik ekspertlariga savol berish
-
 ---
 
 **Xavfsiz bo'ling va mas'uliyat bilan o'rganing! 🛡️**
